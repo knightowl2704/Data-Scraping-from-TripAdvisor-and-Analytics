@@ -1,6 +1,6 @@
 # Data-Scraping-from-TripAdvisor-and-Analytics
 
-Data scraping using Selenium Webdriver for Chrome and Beautiful Soup.
+<h2> Data scraping using Selenium Webdriver for Chrome and Beautiful Soup. </h2>
 
 **Problem Statement**: Scraping the Reviews from tripAdvisor webpage for a particular restaurant along with the review date, title and rating. 
 
@@ -67,3 +67,76 @@ for i in range(0,lastpageno):
 ```
 
 Notice how the urls just differ in the *or10*,*or20* part.
+
+<h2> Data and Sentiment Analysis with Natural Language Processing. </h2>
+
+**Problem Statement**: Cleaning the obtained dataset and using natural language processing techniques for data and sentiment analysis. 
+
+**Cleaning the reviews**
+
+```
+def clean_review():
+    for i in range(0,len(df['review_paragraph'])):
+        review = re.sub('[^a-zA-Z]', ' ', df['review_paragraph'][i])  
+        review = review.lower()  
+        review = review.split()  
+        review = [w for w in review if not w in stopwords]
+        porter = PorterStemmer()
+        review = [porter.stem(word) for word in review]
+        review = ' '.join(review)   
+        corpus.append(review) 
+```
+Created a corpus of reviews with stopwords removed, cases lowered, and the words stemmed. 
+
+**Most Frequent words in the reviews**
+```
+from sklearn.feature_extraction.text import CountVectorizer
+vec = CountVectorizer().fit(corpus)
+bag_of_words = vec.transform(corpus)
+sum_words = bag_of_words.sum(axis=0) 
+words_freq = [(word, sum_words[0, idx]) for word, idx in vec.vocabulary_.items()]
+words_freq =sorted(words_freq, key = lambda x: x[1], reverse=True)
+```
+Used *CountVectorizer* to create a simple bag-of-words model and then formed an array of tuples of word and its frequency. 
+The top 10 words were as follows: 
+```
+[('food', 240),
+ ('restaur', 136),
+ ('great', 124),
+ ('good', 109),
+ ('place', 99),
+ ('servic', 83),
+ ('caus', 80),
+ ('staff', 79),
+ ('visit', 77),
+ ('delhi', 71)]
+ ```
+
+**Sentiment Analysis using  vaderSentiment's SentimentIntensityAnalyser**
+
+For each of the reviews, calculated the polarity score, which returns an object as follows : 
+```
+sentiment_dict = {
+            "neg": value,
+            "neu": value,
+            "pos": value,
+            "compound": value,
+        }
+```
+
+Used the following thresholds for determining the Polarity of the review. Also added a new column with Positive Score for each review.
+
+```
+        if score['compound'] >= 0.05 : 
+            new_df['Polarity'][i] = "Positive" 
+        elif score['compound'] <= -0.05 : 
+            new_df['Polarity'][i] = "Negative"
+        else: 
+            new_df['Polarity'][i] = "Neutral"
+```
+
+This newly created *Positive Score* column will help us in determining the most positive review and most negative review. The review with *max()* positive score is the most positive review and with *min()* positive score is the most negative review.
+
+Check the notebook, `MWG_Analysis.ipnyb` for more analysis on reviews, ratings and to find out which is the most positive review and most negative review.
+
+
